@@ -85,12 +85,20 @@ func main() {
     // Subscribe to the request and update topics that we need to listen to
     err = SubscribeToTopics(cli, broker.MetadataTopic, broker.ControlTopic)
 
+
     // Make sure we subscribed to topics okay
     if err != nil {
         log.Criticalf("Fatal Error subscribing to topics: %s", err)
         os.Exit(ErrorSubscribing)
     }
     log.Debugf("Subscribed to topic '%s'", broker.ControlTopic)
+
+    // Create the sensor watcher
+    // TODO: setup the watcher
+    sensorWatcher := new(SensorWatcher)
+
+    // Initial publish metadata
+    err = PublishMetadata(cli, config, sensorWatcher, config.Broker.MetadataTopic)
 
     ////////////////////////////////////////////////////////
     // Set up channel on which to send signal notifications.
