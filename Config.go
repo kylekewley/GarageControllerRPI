@@ -18,6 +18,7 @@ type Controller struct {
   Name string
   IsController bool
   LogLevel string
+  Timezone string
 }
 
 type Door struct {
@@ -39,6 +40,7 @@ func NewConfig() *Config {
   controller.Name = "GarageController"
   controller.IsController = true
   controller.LogLevel = "INFO"
+  controller.Timezone = "UTC"
 
   doors := []Door{}
 

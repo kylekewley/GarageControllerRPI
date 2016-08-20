@@ -10,6 +10,7 @@ ControlTopic = "home/garage/door/control"
 Name = "HomeController"
 IsController = true
 LogLevel = "INFO"
+Timezone = "PST"
 
 [[Doors]]
 Name = "door1"
