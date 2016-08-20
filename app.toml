@@ -13,12 +13,12 @@ LogLevel = "INFO"
 Timezone = "PST"
 
 [[Doors]]
-Name = "door1"
+Name = "Middle Door"
 SensorPin = 0
 ControlPin = 0
 
 [[Doors]]
-Name = "door2"
+Name = "Left Door"
 SensorPin = 1
 ControlPin = 1
 

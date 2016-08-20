@@ -2,8 +2,10 @@ package main
 
 import (
     "os"
+    "errors"
     "os/signal"
     "encoding/json"
+    "github.com/yosssi/gmq/mqtt/client"
     "github.com/op/go-logging"
     "github.com/spf13/viper"
 )
@@ -68,7 +70,7 @@ func main() {
         SetupLogging(level)
     }
     log.Debug("Logging setup properly")
-    log.Infof("Config file read: %s", configJSON)
+    log.Debugf("Config file read: %s", configJSON)
     ///////////////////// Done With Command Line Args /////////////////////////
 
 
@@ -82,8 +84,17 @@ func main() {
     }
     log.Debugf("Successfully connected to MQTT broker %s:%i", broker.Hostname, broker.Port)
 
+    // Create the sensor watcher
+    // TODO: setup the watcher
+    sensorWatcher := new(SensorWatcher)
+
+    // Create and setup the controller
+    // TODO: setup the controller
+    ioController := new(IOController)
+
     // Subscribe to the request and update topics that we need to listen to
-    err = SubscribeToTopics(cli, broker.MetadataTopic, broker.ControlTopic)
+    handler := HandleControlRequest(ioController, sensorWatcher, config, cli)
+    err = SubscribeToTopics(cli, broker.ControlTopic, handler)
 
 
     // Make sure we subscribed to topics okay
@@ -93,12 +104,12 @@ func main() {
     }
     log.Debugf("Subscribed to topic '%s'", broker.ControlTopic)
 
-    // Create the sensor watcher
-    // TODO: setup the watcher
-    sensorWatcher := new(SensorWatcher)
 
     // Initial publish metadata
     err = PublishMetadata(cli, config, sensorWatcher, config.Broker.MetadataTopic)
+    if err != nil {
+      log.Warningf("Unable to publish metadata: '%s'", err)
+    }
 
     ////////////////////////////////////////////////////////
     // Set up channel on which to send signal notifications.
@@ -115,4 +126,28 @@ func main() {
         log.Errorf("Error while disconnecting: %s", err)
         os.Exit(ErrorDisconnecting)
     }
+}
+
+func HandleControlRequest(controller *IOController, sensorWatcher *SensorWatcher, config *Config, cli *client.Client) func(string, []byte) error {
+  return func (topicName string, message []byte) error {
+    // Parse the message into the ControlRequest
+    var request ControlRequest
+    err := json.Unmarshal(message, &request)
+
+    if err != nil {
+      return err
+    }
+
+    // Check if it is a metadata request or a control request
+    if request.RequestType == "trigger" {
+      log.Infof("Trigger request received for '%s'", request.Name)
+      return controller.triggerDoor(request.Name)
+    }else if request.RequestType == "metadata" {
+      log.Infof("Metadata request received", request.Name)
+      return PublishMetadata(cli, config, sensorWatcher, config.Broker.MetadataTopic)
+    }else {
+      // Unsupported request
+      return errors.New("Unsupported request type: " + request.RequestType)
+    }
+  }
 }

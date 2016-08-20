@@ -14,10 +14,14 @@ type Metadata struct {
   Doors []DoorStatus
 }
 
+type ControlRequest struct {
+  RequestType string
+  Name string
+}
 
 
 /* Broker code */
-func SubscribeToTopics(cli *client.Client, metadataTopic string, controlTopic string) error {
+func SubscribeToTopics(cli *client.Client, controlTopic string, controlHandler func(string, []byte) error) error {
     // Subscribe to topics.
     err := cli.Subscribe(&client.SubscribeOptions{
         SubReqs: []*client.SubReq{
@@ -25,7 +29,10 @@ func SubscribeToTopics(cli *client.Client, metadataTopic string, controlTopic st
                 TopicFilter: []byte(controlTopic),
                 QoS:         mqtt.QoS2,
                 Handler: func(topicName, message []byte) {
-                    HandleControlRequest(metadataTopic, cli, string(topicName), message)
+                  err := controlHandler(string(topicName), message);
+                  if err != nil {
+                    log.Warningf("Issue with control message: '%s'", err)
+                  }
                 },
             },
         },
@@ -64,7 +71,7 @@ metadataTopic string) error {
     Message:   []byte(metadataJSON),
   })
 
-  log.Infof("Published metadata: %s", metadataJSON);
+  log.Debugf("Published metadata: %s", metadataJSON);
 
   return err
 }
@@ -86,7 +93,4 @@ func ConnectToBroker(host string, port int) (*client.Client, error) {
 
 
     return cli, err
-}
-
-func HandleControlRequest(metadataTopic string, cli *client.Client, topicName string, message []byte) {
 }
