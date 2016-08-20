@@ -143,7 +143,7 @@ func HandleControlRequest(controller *IOController, sensorWatcher *SensorWatcher
       log.Infof("Trigger request received for '%s'", request.Name)
       return controller.triggerDoor(request.Name)
     }else if request.RequestType == "metadata" {
-      log.Infof("Metadata request received", request.Name)
+      log.Infof("Metadata request received")
       return PublishMetadata(cli, config, sensorWatcher, config.Broker.MetadataTopic)
     }else {
       // Unsupported request
