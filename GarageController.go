@@ -1,10 +1,11 @@
 package main
 
 import (
-    "flag"
     "os"
     "os/signal"
+    "encoding/json"
     "github.com/op/go-logging"
+    "github.com/spf13/viper"
 )
 
 var log = logging.MustGetLogger("log")
@@ -12,6 +13,7 @@ var log = logging.MustGetLogger("log")
 // Declare exit values
 const (
     Success = iota
+    ErrorReadingConfig
     ErrorConnecting
     ErrorSubscribing
     ErrorDisconnecting
@@ -24,73 +26,71 @@ const (
 )
 
 func main() {
-    /////////////////////// Parse Command Line Args /////////////////////////
-    // Parse the logging level
-    var logLevel string
-    flag.StringVar(&logLevel, "l", "INFO", "The logging level string. {DEBUG, INFO, NOTICE, WARNING, ERROR, CRITICAL}")
+    SetupLogging(logging.INFO)
+    /////////////////////// Parse Config File /////////////////////////
+    viper.SetConfigName("app")
+    viper.AddConfigPath("./")
 
-    // Port for the broker
-    port := flag.Int("p", 1883, "The port number for the MQTT broker")
+    // Set the defaults
+    config := NewConfig()
+    err := viper.ReadInConfig()
 
-    // MQTT Host
-    var hostname string
-    flag.StringVar(&hostname, "h", "localhost", "The hostname of the MQTT broker")
+    // Exit immediately if there is an error reading the config file
+    if err != nil {
+      log.Criticalf("Fatal error reading config file: '%s'", err)
+      os.Exit(ErrorReadingConfig)
+    }
 
-    // Update topic. This is the topic where garage status updates are received
-    var updateTopic string
-    flag.StringVar(&updateTopic, "u", "home/garage/door/update",
-                    "The topic to listen for garage door updates on")
+    err = viper.Unmarshal(config)
 
-    // Metadata topic
-    var metadataTopic string
-    flag.StringVar(&metadataTopic, "m", "home/garage/door/metadata", "The topic "+
-                    "that metadata is sent out on")
+    // Exit immediately if there is an error reading the config file
+    if err != nil {
+      log.Criticalf("Fatal error reading config file: '%s'", err)
+      os.Exit(ErrorReadingConfig)
+    }
 
-    // Garage Control topic
-    var controlTopic string
-    flag.StringVar(&controlTopic, "c", "home/garage/door/control", "The topic "+
-                    "that is used for garage control")
+    // Extract the config data
+    broker := config.Broker
+    controller := config.Controller
 
-    // Parse additional arguments here...
+    // Convert back to a string so we can log it
+    configJSON, _ := json.MarshalIndent(config, "", "  ")
 
-    // Do the actual parsing
-    flag.Parse()
-
-    // Try to get the log level from the cmd line
-    level, err := logging.LogLevel(logLevel)
+    // Make sure the config log level is valid
+    level, err := logging.LogLevel(controller.LogLevel)
 
     // If the log level can't be parsed, default to info
     if err != nil {
-        level = logging.INFO
-        SetupLogging(level)
-        log.Warningf("The command line log level '%s' could not be parsed. "+
-                     "Defaulting to INFO. Use the -h option for help.", logLevel)
+        log.Warningf("The log level '%s' could not be parsed. Defaulting to INFO. " +
+        "Should be (DEBUG|INFO|NOTICE|WARNING|ERROR|CRITICAL)", controller.LogLevel)
     }else {
         // Setup logging with the parsed level
         SetupLogging(level)
     }
     log.Debug("Logging setup properly")
+    log.Infof("Config file read: %s", configJSON)
     ///////////////////// Done With Command Line Args /////////////////////////
 
+
     //// Connect to the Broker
-    cli, err := ConnectToBroker(hostname, *port)
+    cli, err := ConnectToBroker(broker.Hostname, broker.Port)
 
     // Make sure the connection went smoothly
     if err != nil {
         log.Criticalf("Fatal error connecting to MQTT Broker: %s", err)
         os.Exit(ErrorConnecting)
     }
-    log.Debugf("Successfully connected to MQTT broker %s:%i", hostname, *port)
+    log.Debugf("Successfully connected to MQTT broker %s:%i", broker.Hostname, broker.Port)
 
     // Subscribe to the request and update topics that we need to listen to
-    err = SubscribeToTopics(cli, metadataTopic, controlTopic)
+    err = SubscribeToTopics(cli, broker.MetadataTopic, broker.ControlTopic)
 
     // Make sure we subscribed to topics okay
     if err != nil {
         log.Criticalf("Fatal Error subscribing to topics: %s", err)
         os.Exit(ErrorSubscribing)
     }
-    log.Debugf("Subscribed to topic '%s'", controlTopic)
+    log.Debugf("Subscribed to topic '%s'", broker.ControlTopic)
 
     ////////////////////////////////////////////////////////
     // Set up channel on which to send signal notifications.

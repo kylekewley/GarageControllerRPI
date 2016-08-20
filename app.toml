@@ -1,0 +1,23 @@
+[Broker]
+Hostname = "localhost"
+Port = 1883
+
+UpdateTopic = "home/garage/door/update"
+MetadataTopic = "home/garage/door/metadata"
+ControlTopic = "home/garage/door/control"
+
+[Controller]
+Name = "HomeController"
+IsController = true
+LogLevel = "INFO"
+
+[[Doors]]
+Name = "door1"
+SensorPin = 0
+ControlPin = 0
+
+[[Doors]]
+Name = "door2"
+SensorPin = 1
+ControlPin = 1
+
