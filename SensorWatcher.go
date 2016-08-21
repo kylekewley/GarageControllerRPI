@@ -1,6 +1,7 @@
 package main
 
 import (
+    "time"
   . "github.com/cyoung/rpi"
 )
 
@@ -12,7 +13,7 @@ type SensorWatcher struct {
 type DoorStatus struct {
   Name string
   Status string
-  LastChanged int
+  LastChanged int64
 }
 
 func NewSensorWatcherWithConfig(config *Config) *SensorWatcher {
@@ -36,7 +37,7 @@ func NewSensorWatcherWithConfig(config *Config) *SensorWatcher {
         PinMode(BoardToPin(door.SensorPin), INPUT)
         if config.Controller.IsController {
             PinMode(BoardToPin(door.ControlPin), OUTPUT)
-            DigitalWrite(BoardToPin(door.ControlPin), LOW)
+            DigitalWrite(BoardToPin(door.ControlPin), HIGH)
         }
     }
 
@@ -57,6 +58,29 @@ func (s *SensorWatcher) CheckValuesForever(interval int, changeHandler func(*Doo
 
 // Update the internal structure with new values
 func (s *SensorWatcher) UpdateValues(changeHandler func(*DoorStatus)) {
+    for key, door := range s.Doors {
+        status := s.DoorStatuses[key]
+        pin := BoardToPin(door.SensorPin)
+
+        // Read the value using WiringPI
+        statusString := "open"
+        if DigitalRead(pin) == HIGH {
+            statusString = "closed"
+        }
+
+        // Check if there was a change
+        if statusString != status.Status {
+            newStatus := DoorStatus{
+                Name: key,
+                Status: statusString,
+                LastChanged: time.Now().Unix(),
+            }
+
+            s.DoorStatuses[key] = newStatus
+            // Broadcast the message
+            changeHandler(&newStatus)
+        }
+    }
 }
 
 func (s *SensorWatcher) GetDoorStatus(doorName string) *DoorStatus {
