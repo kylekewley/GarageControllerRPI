@@ -70,15 +70,20 @@ func (s *SensorWatcher) UpdateValues(changeHandler func(*DoorStatus)) {
 
         // Check if there was a change
         if statusString != status.Status {
+            log.Infof("Door %s changed from '%s' to '%s'", key, status.Status, statusString)
             newStatus := DoorStatus{
                 Name: key,
                 Status: statusString,
                 LastChanged: time.Now().Unix(),
             }
 
+            // Broadcast the message. The changeHandler might be nil if this is
+            // being called for initialization
+            if changeHandler != nil {
+                changeHandler(&newStatus)
+            }
+
             s.DoorStatuses[key] = newStatus
-            // Broadcast the message
-            changeHandler(&newStatus)
         }
     }
 }
