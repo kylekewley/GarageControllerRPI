@@ -9,7 +9,7 @@ ControlTopic = "home/garage/door/control"
 [Controller]
 Name = "HomeController"
 IsController = true
-LogLevel = "INFO"
+LogLevel = "DEBUG"
 Timezone = "PST"
 
 # Note that the pin numbering is based on the board pin numbering scheme
@@ -21,6 +21,6 @@ ControlPin = 12
 
 [[Doors]]
 Name = "Left Door"
-SensorPin = 15
+SensorPin = 13
 ControlPin = 16
 
