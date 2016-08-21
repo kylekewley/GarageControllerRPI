@@ -8,6 +8,7 @@ import (
     "github.com/yosssi/gmq/mqtt/client"
     "github.com/op/go-logging"
     "github.com/spf13/viper"
+    . "github.com/cyoung/rpi"
 )
 
 var log = logging.MustGetLogger("log")
@@ -84,9 +85,13 @@ func main() {
     }
     log.Debugf("Successfully connected to MQTT broker %s:%i", broker.Hostname, broker.Port)
 
+    // Setup WiringPI Stuff
+    WiringPiSetup()
+
     // Create the sensor watcher
-    // TODO: setup the watcher
-    sensorWatcher := new(SensorWatcher)
+    sensorWatcher := NewSensorWatcherWithConfig(config)
+    updateHandler := HandleUpdatePublish(cli, broker.UpdateTopic)
+    go sensorWatcher.CheckValuesForever(100, updateHandler)
 
     // Create and setup the controller
     // TODO: setup the controller
@@ -125,6 +130,12 @@ func main() {
     if err := cli.Disconnect(); err != nil {
         log.Errorf("Error while disconnecting: %s", err)
         os.Exit(ErrorDisconnecting)
+    }
+}
+
+func HandleUpdatePublish(cli *client.Client, updateTopic string) func(*DoorStatus) {
+    return func (doorStatus *DoorStatus) {
+        PublishUpdateMessage(cli, updateTopic, doorStatus)
     }
 }
 

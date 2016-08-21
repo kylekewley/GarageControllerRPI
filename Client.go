@@ -76,6 +76,29 @@ metadataTopic string) error {
   return err
 }
 
+func PublishUpdateMessage(cli *client.Client, updateTopic string, doorStatus *DoorStatus) error {
+    updateJSON,err := json.Marshal(doorStatus)
+
+    if err != nil {
+        log.Errorf("Error converting DoorStatus to JSON string. '%s'", err)
+        return err
+    }
+
+    log.Debugf("Published Door update: %s", updateJSON);
+    err = cli.Publish(&client.PublishOptions {
+        QoS:    mqtt.QoS1,
+        Retain: false,
+        TopicName: []byte(updateTopic),
+        Message: []byte(updateJSON),
+    })
+
+    if err != nil {
+        log.Errorf("Error publishing door update to MQTT broker: '%s'", err)
+    }
+
+    return err
+}
+
 func ConnectToBroker(host string, port int) (*client.Client, error) {
     // Create an MQTT Client.
     cli := client.New(&client.Options{

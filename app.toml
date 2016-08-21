@@ -12,13 +12,15 @@ IsController = true
 LogLevel = "INFO"
 Timezone = "PST"
 
+# Note that the pin numbering is based on the board pin numbering scheme
+# specified by the wiringPI library
 [[Doors]]
 Name = "Middle Door"
-SensorPin = 0
-ControlPin = 0
+SensorPin = 11
+ControlPin = 12
 
 [[Doors]]
 Name = "Left Door"
-SensorPin = 1
-ControlPin = 1
+SensorPin = 15
+ControlPin = 16
 
