@@ -111,7 +111,7 @@ func ConnectToBroker(host string, port int) (*client.Client, error) {
     err := cli.Connect(&client.ConnectOptions{
         Network:  "tcp",
         Address:  fmt.Sprintf("%s:%d", host, port),
-        ClientID: []byte("GarageHistoryServer"),
+        ClientID: []byte("GarageController"),
     })
 
 
