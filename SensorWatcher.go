@@ -11,9 +11,9 @@ type SensorWatcher struct {
 }
 
 type DoorStatus struct {
-  Name string
+  DoorName string
   Status string
-  LastChanged int64
+  Timestamp int64
 }
 
 func NewSensorWatcherWithConfig(config *Config) *SensorWatcher {
@@ -28,9 +28,9 @@ func NewSensorWatcherWithConfig(config *Config) *SensorWatcher {
         // Store the doors in the internal structres
         watcher.Doors[door.Name] = door
         watcher.DoorStatuses[door.Name] = DoorStatus{
-            Name: door.Name,
+            DoorName: door.Name,
             Status: "initializing",
-            LastChanged: 0,
+            Timestamp: 0,
         }
 
         // Do the WiringPI GPIO setup
@@ -72,9 +72,9 @@ func (s *SensorWatcher) UpdateValues(changeHandler func(*DoorStatus)) {
         if statusString != status.Status {
             log.Infof("Door %s changed from '%s' to '%s'", key, status.Status, statusString)
             newStatus := DoorStatus{
-                Name: key,
+                DoorName: key,
                 Status: statusString,
-                LastChanged: time.Now().Unix(),
+                Timestamp: time.Now().Unix(),
             }
 
             // Broadcast the message. The changeHandler might be nil if this is
@@ -93,9 +93,9 @@ func (s *SensorWatcher) GetDoorStatus(doorName string) *DoorStatus {
     if !ok {
         // The door doesn't exist. Return dummy DoorStatus
         return &DoorStatus{
-            Name: doorName,
+            DoorName: doorName,
             Status: "",
-            LastChanged: 0,
+            Timestamp: 0,
         }
     }
 
