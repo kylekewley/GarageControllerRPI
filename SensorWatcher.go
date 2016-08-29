@@ -35,10 +35,6 @@ func NewSensorWatcherWithConfig(config *Config) *SensorWatcher {
 
         // Do the WiringPI GPIO setup
         PinMode(BoardToPin(door.SensorPin), INPUT)
-        if config.Controller.IsController {
-            PinMode(BoardToPin(door.ControlPin), OUTPUT)
-            DigitalWrite(BoardToPin(door.ControlPin), HIGH)
-        }
     }
 
     watcher.UpdateValues(nil)

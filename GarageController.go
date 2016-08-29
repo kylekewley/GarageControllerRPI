@@ -95,7 +95,7 @@ func main() {
 
     // Create and setup the controller
     // TODO: setup the controller
-    ioController := new(IOController)
+    ioController := NewIOControllerWithConfig(config)
 
     // Subscribe to the request and update topics that we need to listen to
     handler := HandleControlRequest(ioController, sensorWatcher, config, cli)
