@@ -1,10 +1,12 @@
 [Broker]
-Hostname = "localhost"
+Hostname = "mqtt.dioty.co"
 Port = 1883
+Username = "kylek61294@gmail.com"
+Password = "1d3337bc"
 
-UpdateTopic = "home/garage/door/update"
-MetadataTopic = "home/garage/door/metadata"
-ControlTopic = "home/garage/door/control"
+UpdateTopic = "/kylek61294@gmail.com/home/garage/door/update"
+MetadataTopic = "/kylek61294@gmail.com/home/garage/door/metadata"
+ControlTopic = "/kylek61294@gmail.com/home/garage/door/control"
 
 [Controller]
 Name = "HomeController"

@@ -76,7 +76,7 @@ func main() {
 
 
     //// Connect to the Broker
-    cli, err := ConnectToBroker(broker.Hostname, broker.Port)
+    cli, err := ConnectToBroker(broker.Hostname, broker.Port, broker.Username, broker.Password)
 
     // Make sure the connection went smoothly
     if err != nil {

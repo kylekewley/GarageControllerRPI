@@ -71,7 +71,7 @@ metadataTopic string) error {
     Message:   []byte(metadataJSON),
   })
 
-  log.Debugf("Published metadata: %s", metadataJSON);
+  log.Debugf("Published metadata to topic %s: %s", metadataTopic, metadataJSON);
 
   return err
 }
@@ -99,7 +99,7 @@ func PublishUpdateMessage(cli *client.Client, updateTopic string, doorStatus *Do
     return err
 }
 
-func ConnectToBroker(host string, port int) (*client.Client, error) {
+func ConnectToBroker(host string, port int, username string, password string) (*client.Client, error) {
     // Create an MQTT Client.
     cli := client.New(&client.Options{
         ErrorHandler: func(err error) {
@@ -107,13 +107,17 @@ func ConnectToBroker(host string, port int) (*client.Client, error) {
         },
     })
 
+    options := &client.ConnectOptions{
+            Network:  "tcp",
+            Address:  fmt.Sprintf("%s:%d", host, port),
+            CleanSession: true,
+        }
+    if len(username) > 0 {
+        options.UserName = []byte(username)
+        options.Password = []byte(password)
+    }
     // Connect to the MQTT Server.
-    err := cli.Connect(&client.ConnectOptions{
-        Network:  "tcp",
-        Address:  fmt.Sprintf("%s:%d", host, port),
-        ClientID: []byte("GarageController"),
-    })
-
+    err := cli.Connect(options)
 
     return cli, err
 }

@@ -9,6 +9,8 @@ type Config struct {
 type Broker struct {
   Hostname string
   Port int
+  Username string
+  Password string
   UpdateTopic string
   MetadataTopic string
   ControlTopic string
@@ -32,6 +34,8 @@ func NewConfig() *Config {
   var broker Broker
   broker.Hostname = "localhost"
   broker.Port = 1883
+  broker.Username = ""
+  broker.Password = ""
   broker.UpdateTopic = "home/garage/door/update"
   broker.MetadataTopic = "home/garage/door/metadata"
   broker.ControlTopic = "home/garage/door/control"
